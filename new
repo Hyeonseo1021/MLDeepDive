@@ -151,8 +151,18 @@ for year in years:
 
                                 final_counts['타수'] = df['타수'].sum()
                                 final_counts['타점'] = df['타점'].sum()
-
                                 final_counts['타율'] = df['타율'].mean()
+
+                                slg = (result_counts['안타'] + 4 * result_counts['홈런']) / result_counts['타수']
+                                final_counts['SLG'] = slg.sum()  # SLG의 합산
+
+                                # OBP 계산: (안타 + 볼넷) / (타수 + 볼넷)
+                                obp = (result_counts['안타'] + result_counts['볼넷']) / (result_counts['타수'] + result_counts['볼넷'])
+                                final_counts['OBP'] = obp.mean()  # OBP의 평균
+
+                                # OPS 계산: OBP + SLG
+                                ops = final_counts['OBP'] + final_counts['SLG']
+                                final_counts['OPS'] = ops
 
                                 kia_batter_df = pd.DataFrame([final_counts])
                               
@@ -247,6 +257,18 @@ for year in years:
                                 final_counts['타점'] = df['타점'].sum()
 
                                 final_counts['타율'] = df['타율'].mean()
+
+                                
+                                slg = (result_counts['안타'] + 4 * result_counts['홈런']) / result_counts['타수']
+                                final_counts['SLG'] = slg.sum()  # SLG의 합산
+
+                                # OBP 계산: (안타 + 볼넷) / (타수 + 볼넷)
+                                obp = (result_counts['안타'] + result_counts['볼넷']) / (result_counts['타수'] + result_counts['볼넷'])
+                                final_counts['OBP'] = obp.mean()  # OBP의 평균
+
+                                # OPS 계산: OBP + SLG
+                                ops = final_counts['OBP'] + final_counts['SLG']
+                                final_counts['OPS'] = ops
 
                                 opp_batter_df = pd.DataFrame([final_counts])
                               
