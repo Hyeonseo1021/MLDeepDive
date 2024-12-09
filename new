@@ -13,12 +13,12 @@ options.add_argument("--incognito")
 # options.add_argument("--headless")  # 필요 시 백그라운드 실행
 
 # 크롬 드라이버 경로 설정
-driver_path = "C:/Users/Kim/chromedriver-win64/chromedriver.exe"
+driver_path = "C:/chromedriver-win64/chromedriver.exe"
 driver = webdriver.Chrome(service=Service(driver_path), options=options)
 
 # 연도와 월 반복
 years = range(2020, 2025)   # 2020년부터 2024년까지
-months = range(3, 11)       # 3월부터 10월까지
+months = range(6, 11)       # 3월부터 10월까지
 
 for year in years:
     for month in months:
@@ -98,21 +98,21 @@ for year in years:
                             if team_name == "KIA" and '타자 기록' in record_type:
                                 batter_table = article.find_element(By.CLASS_NAME, 'headDark')
                                 headers = batter_table.find_elements(By.TAG_NAME, 'th')
-                                header_text = [header.text.strip() for header in headers[1:10]]
-                                
-
+                                header_text = [header.text.strip() for header in headers[1:13]]
+                            
                                 rows = batter_table.find_elements(By.CSS_SELECTOR, "tbody tr")
                                 batter_data = []
 
                                 for row in rows:
                                     cells = row.find_elements(By.TAG_NAME, 'td')
-                                    if len(cells) >= 20:
-                                        row_data = [cell.text.strip() for cell in cells[:9]]
-                                        row_data.append(cells[15].text.strip())
+                                    if len(cells) >= 10:
+                                        row_data = [cell.text.strip() for cell in cells[:12]]
+                                        row_data.append(cells[12].text.strip())
+                                        row_data.append(cells[14].text.strip())
                                         row_data.append(cells[17].text.strip())
-                                        row_data.append(cells[20].text.strip())
+                                        
                                         batter_data.append(row_data)
-
+                                
                                 df = pd.DataFrame(batter_data, columns=header_text + ['타수', '타점', '타율'])
 
                                 # 이닝별 타격 결과를 매핑된 값으로 변환
@@ -127,6 +127,8 @@ for year in years:
                                         '안타': 0,
                                         '홈런': 0,
                                         '병살타': 0,
+                                        '희생플라이' : 0,
+                                        '희생번트' : 0
                                     }
 
                                     for result in row:
@@ -135,7 +137,7 @@ for year in years:
                                     return pd.Series(counts)
                                 
                                 # 각 행별로 타격 결과 카운트 계산
-                                result_counts = df_mapped.iloc[:-1].apply(count_results, axis=1)                                                   
+                                result_counts = df_mapped.apply(count_results, axis=1)                                                   
 
                                 df['타수'] = pd.to_numeric(df['타수'], errors='coerce')
                                 df['타점'] = pd.to_numeric(df['타점'], errors='coerce')
@@ -152,12 +154,13 @@ for year in years:
 
                                 final_counts['타율'] = df['타율'].mean()
 
-                                final_batter_df = pd.DataFrame([final_counts])
+                                kia_batter_df = pd.DataFrame([final_counts])
+                              
 
                             if team_name == "KIA" and '투수 기록' in record_type:
                                 pitcher_table = article.find_element(By.CSS_SELECTOR, ".table_Typ01.mbScroll.mbThNofix")
                                 headers = pitcher_table.find_elements(By.TAG_NAME, 'th')
-                                header_text = [header.text.strip() for header in headers[12:16]]
+                                header_text = [header.text.strip() for header in headers[13:16]]
 
                                 rows = pitcher_table.find_elements(By.CSS_SELECTOR, "tbody tr")
                                 pitcher_data = []
@@ -165,12 +168,12 @@ for year in years:
                                 for row in rows:
                                     cells = row.find_elements(By.TAG_NAME, 'td')
                                     if len(cells) >= 10:
-                                        row_data = [cell.text.strip() for cell in cells[11:]]
+                                        row_data = [cell.text.strip() for cell in cells[12:]]
                                         pitcher_data.append(row_data)
                                     
                                 df = pd.DataFrame(pitcher_data, columns=header_text)
 
-                                numeric_columns = ['삼진', '실점', '자책']
+                                numeric_columns = ['실점', '자책']
                                 df[numeric_columns] = df[numeric_columns].astype(int)
 
                                 df['ERA'] = df['ERA'].astype(float)
@@ -183,29 +186,31 @@ for year in years:
                                 
                                 aggregated_data = aggregate_pitcher_data(df)
 
-                                final_pitcher_df = pd.DataFrame([aggregated_data], columns=header_text)
+                                kia_pitcher_df = pd.DataFrame([aggregated_data], columns=header_text)
 
 
                             if team_name == opp_team and '타자 기록' in record_type:
                                 batter_table = article.find_element(By.CLASS_NAME, 'headDark')
                                 headers = batter_table.find_elements(By.TAG_NAME, 'th')
-                                header_text = [header.text.strip() for header in headers[1:10]]
-
+                                header_text = [header.text.strip() for header in headers[1:13]]
+                            
                                 rows = batter_table.find_elements(By.CSS_SELECTOR, "tbody tr")
                                 batter_data = []
 
                                 for row in rows:
                                     cells = row.find_elements(By.TAG_NAME, 'td')
                                     if len(cells) >= 10:
-                                        row_data = [cell.text.strip() for cell in cells[:9]]
-                                        row_data.append(cells[15].text.strip())
+                                        row_data = [cell.text.strip() for cell in cells[:12]]
+                                        row_data.append(cells[12].text.strip())
+                                        row_data.append(cells[14].text.strip())
                                         row_data.append(cells[17].text.strip())
+                                        
                                         batter_data.append(row_data)
-
-                                df = pd.DataFrame(batter_data, columns=header_text + ['타수', '타점'])
+                                
+                                df = pd.DataFrame(batter_data, columns=header_text + ['타수', '타점', '타율'])
 
                                 # 이닝별 타격 결과를 매핑된 값으로 변환
-                                df_mapped = df.drop(columns=['타수', '타점']).apply(lambda x: x.map(lambda value: result_mapping.get(value, '') if pd.notnull(value) else ''), axis=1)
+                                df_mapped = df.drop(columns=['타수', '타점', '타율']).apply(lambda x: x.map(lambda value: result_mapping.get(value, '') if pd.notnull(value) else ''), axis=1)
 
                                 # 타격 결과별 카운트를 위한 함수
                                 def count_results(row):
@@ -216,6 +221,8 @@ for year in years:
                                         '안타': 0,
                                         '홈런': 0,
                                         '병살타': 0,
+                                        '희생플라이' : 0,
+                                        '희생번트' : 0
                                     }
 
                                     for result in row:
@@ -224,25 +231,30 @@ for year in years:
                                     return pd.Series(counts)
                                 
                                 # 각 행별로 타격 결과 카운트 계산
-                                result_counts = df_mapped.iloc[:-1].apply(count_results, axis=1)                                                   
+                                result_counts = df_mapped.apply(count_results, axis=1)                                                   
 
                                 df['타수'] = pd.to_numeric(df['타수'], errors='coerce')
                                 df['타점'] = pd.to_numeric(df['타점'], errors='coerce')
-                                
+                                df['타율'] = pd.to_numeric(df['타율'], errors='coerce')
+
                                 result_counts['타수'] = df['타수']
                                 result_counts['타점'] = df['타점']
+                                result_counts['타율'] = df['타율']
 
                                 final_counts = result_counts.drop(columns=['타수', '타점']).sum()
 
                                 final_counts['타수'] = df['타수'].sum()
                                 final_counts['타점'] = df['타점'].sum()
 
-                                final_batter_df = pd.DataFrame([final_counts])
+                                final_counts['타율'] = df['타율'].mean()
+
+                                opp_batter_df = pd.DataFrame([final_counts])
+                              
 
                             if team_name == opp_team and '투수 기록' in record_type:
                                 pitcher_table = article.find_element(By.CSS_SELECTOR, ".table_Typ01.mbScroll.mbThNofix")
                                 headers = pitcher_table.find_elements(By.TAG_NAME, 'th')
-                                header_text = [header.text.strip() for header in headers[12:16]]
+                                header_text = [header.text.strip() for header in headers[13:16]]
 
                                 rows = pitcher_table.find_elements(By.CSS_SELECTOR, "tbody tr")
                                 pitcher_data = []
@@ -250,12 +262,12 @@ for year in years:
                                 for row in rows:
                                     cells = row.find_elements(By.TAG_NAME, 'td')
                                     if len(cells) >= 10:
-                                        row_data = [cell.text.strip() for cell in cells[11:]]
+                                        row_data = [cell.text.strip() for cell in cells[12:]]
                                         pitcher_data.append(row_data)
 
                                 df = pd.DataFrame(pitcher_data, columns=header_text)
 
-                                numeric_columns = ['삼진', '실점', '자책']
+                                numeric_columns = ['실점', '자책']
                                 df[numeric_columns] = df[numeric_columns].astype(int)
 
                                 df['ERA'] = df['ERA'].astype(float)
@@ -268,15 +280,16 @@ for year in years:
                                 
                                 aggregated_data = aggregate_pitcher_data(df)
 
-                                final_pitcher_df = pd.DataFrame([aggregated_data], columns=header_text)
+                                opp_pitcher_df = pd.DataFrame([aggregated_data], columns=header_text)
 
-                            
-                                
-                            if 'final_batter_df' in locals() and 'final_pitcher_df' in locals():
-                                final_team_df = pd.concat([final_batter_df, final_pitcher_df], axis=1)
-                                print(f"{team_name}의 팀 기록")
-                                print(final_team_df)
-                                
+                        if 'kia_batter_df' in locals() and 'kia_pitcher_df' in locals():  
+                            kia_df = pd.concat([kia_batter_df, kia_pitcher_df], axis=1)
+                            print(f"KIA의 팀 기록 : {kia_df}")
+                        
+                        if 'opp_batter_df' in locals() and 'opp_pitcher_df' in locals():
+                            opp_team_df = pd.concat([opp_batter_df, opp_pitcher_df], axis=1)
+                            print(f"{opp_team}의 팀 기록 : {opp_team_df}")
+                                                
                         # 뒤로 가기
                         driver.back()
                         time.sleep(2)
